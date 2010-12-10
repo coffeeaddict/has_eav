@@ -45,6 +45,11 @@ From wikipedia:
   have your own version, or is otherwise necessary, that is fine, but please
   isolate to its own commit so I can cherry-pick around it.
 
+== TODO
+
+* Create a nice generator
+* Put type casting on instance eav attributes
+
 == Copyright
 
 Copyright (c) 2010 Hartog C. de Mik. See LICENSE.txt for further details.
