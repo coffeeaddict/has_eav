@@ -43,3 +43,5 @@ pkg
 
 # For redcar
 .redcar
+
+test/log/test.log
