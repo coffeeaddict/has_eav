@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{has_eav}
-  s.version = "1.0.0"
+  s.version = "1.0.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Hartog C. de Mik"]
@@ -31,6 +31,7 @@ Gem::Specification.new do |s|
     "test/app/models/post_attribute.rb",
     "test/app/models/product.rb",
     "test/app/models/product_attribute.rb",
+    "test/app/models/special_post.rb",
     "test/config.ru",
     "test/config/application.rb",
     "test/config/boot.rb",
@@ -50,6 +51,7 @@ Gem::Specification.new do |s|
     "test/db/migrate/20101210100309_create_post_attributes.rb",
     "test/db/migrate/20101210102322_create_products.rb",
     "test/db/migrate/20101210102347_create_product_attributes.rb",
+    "test/db/migrate/20101210125857_add_type_to_post.rb",
     "test/helper.rb",
     "test/log/development.log",
     "test/script/rails",
@@ -73,6 +75,7 @@ Gem::Specification.new do |s|
     "test/app/models/post_attribute.rb",
     "test/app/models/product.rb",
     "test/app/models/product_attribute.rb",
+    "test/app/models/special_post.rb",
     "test/config/application.rb",
     "test/config/boot.rb",
     "test/config/environment.rb",
@@ -89,6 +92,7 @@ Gem::Specification.new do |s|
     "test/db/migrate/20101210100309_create_post_attributes.rb",
     "test/db/migrate/20101210102322_create_products.rb",
     "test/db/migrate/20101210102347_create_product_attributes.rb",
+    "test/db/migrate/20101210125857_add_type_to_post.rb",
     "test/helper.rb",
     "test/test/unit/post_attribute_test.rb",
     "test/test/unit/post_test.rb",
