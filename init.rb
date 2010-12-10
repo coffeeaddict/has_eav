@@ -1,0 +1,1 @@
+require 'lib/has_eav.rb'
