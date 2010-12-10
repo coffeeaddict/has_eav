@@ -87,4 +87,10 @@ class TestHasEav < Test::Unit::TestCase
     
     assert_equal "failed", post, "has failed"
   end
+  
+  should "work with STI" do
+    p = SpecialPost.create(
+      :title => "title", :contents => "lorem ipsum", :author_name => "hartog"
+    )
+  end
 end

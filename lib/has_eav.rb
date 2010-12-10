@@ -56,14 +56,18 @@ module ActiveRecord
           self.class_eav_attributes[name] = type
         end
                   
-        # class accessor
+        # class accessor - when the superclass != AR::Base asume we are in STI
+        # mode
         def class_eav_attributes # :nodoc:
-          @eav_attributes
+          superclass != ActiveRecord::Base ?
+            superclass.class_eav_attributes :
+            @eav_attributes          
         end
         
-        # class accessor
+        # class accessor - when the superclass != AR::Base asume we are in STI
+        # mode
         def eav_class # :nodoc:
-          @eav_class
+          superclass != ActiveRecord::Base ? superclass.eav_class : @eav_class
         end        
       end # /ClassMethods
       
@@ -188,7 +192,12 @@ module ActiveRecord
         
         # get the key to my <3
         def self_key # :nodoc:
-          "#{self.class.name.underscore}_id".to_sym
+          klass = self.class
+          if klass.superclass != ActiveRecord::Base
+            klass = klass.superclass
+          end
+          
+          "#{klass.name.underscore}_id".to_sym
         end
         
         # cast an eav value to it's desired class
