@@ -45,3 +45,4 @@ pkg
 .redcar
 
 test/log/test.log
+test/db/test.sqlite3
