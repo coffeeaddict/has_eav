@@ -207,14 +207,21 @@ module ActiveRecord
 
 
           begin
+            # for core types [eg: String 'foo']
             eval("#{attributes[attribute]} '#{value}'")
 
           rescue
             begin
+              # for BigDecimal [eg: BigDecimal.new("123.45")]
               eval("#{attributes[attribute]}.new('#{value}')")
 
             rescue
-              value
+              begin
+                # for date/time classes [eg: Date.parse("2011-03-20")]
+                eval("#{attributes[attribute]}.parse('#{value}')")
+              rescue
+                value
+              end
 
             end
           end
