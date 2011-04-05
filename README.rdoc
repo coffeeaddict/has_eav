@@ -4,7 +4,7 @@
 
 Enabled EAV behaviour on ActiveRecord (or is at least supposed to).
 
-This was inspired by https://github.com/visfleet/acts_as_eav_model but is a 
+This was inspired by https://github.com/visfleet/acts_as_eav_model but is a
 more minimized approach and is less automated.
 
 === EAV
@@ -54,7 +54,7 @@ And you are good to go.
 
 === Usage of EAV
 
-For the general usage of EAV, thread wisely. Be careful and suspicious about 
+For the general usage of EAV, thread wisely. Be careful and suspicious about
 your needs.
 
 === Usage of has_eav
@@ -68,15 +68,23 @@ structure. You must define the attributes to be required.
 
 ==== Instance eav_attributes
 
-If you create a method +instance_eav_attributes+ in your model, has_eav will 
+If you create a method +instance_eav_attributes+ in your model, has_eav will
 recognize these attributes as well.
 
 This might be useful for state machines or STI classes where you want to have
-different attributes based on the current state or type of the instance. 
+different attributes based on the current state or type of the instance.
+
+== Changelog
+
+[1.1.1] * Make sure the EAV attributes make it into the serializable_hash
+        * Make sure the nilified attributes are removed from the DB
+[1.1.0] * Casting of dates and times added
+[1.0.1] * STI works
+[1.0.0] * first release
 
 == Contributing to has_eav
- 
-* Check out the latest master to make sure the feature hasn't been implemented 
+
+* Check out the latest master to make sure the feature hasn't been implemented
   or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested
   it and/or contributed it

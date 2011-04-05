@@ -108,15 +108,16 @@ module ActiveRecord
             value = args[0]
 
             if attribute
-              if value
+              if !value.nil?
                 return attribute.send(:write_attribute, "value", value)
 
-              elsif value.nil?
+              else
+                @eav_attributes -= [ attribute ]
                 return attribute.destroy
 
               end
 
-            else
+            elsif !value.nil?
               @eav_attributes << eav_class.new(
                 :name  => attribute_name,
                 :value => "#{value}"
@@ -124,15 +125,18 @@ module ActiveRecord
 
               return cast_eav_value(value, attribute_name)
 
+            else
+              return nil
+
             end
           elsif method_name =~ /\?$/
             return ( attribute and attribute.value == true ) ? true : false
 
           else
+            return nil if attribute and attribute.destroyed?
             return attribute ?
               cast_eav_value(attribute.value, attribute_name) :
               nil
-
           end
 
           raise e
@@ -198,6 +202,17 @@ module ActiveRecord
           end
 
           "#{klass.name.underscore}_id".to_sym
+        end
+
+        # make sure EAV is included in as_json, to_json and to_xml
+        #
+        def serializable_hash options=nil
+          hash = super
+          eav_attributes_list.each do |attribute|
+            hash[attribute] = self.send(attribute)
+          end
+
+          hash
         end
 
         # cast an eav value to it's desired class
