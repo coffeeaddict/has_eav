@@ -204,10 +204,11 @@ module ActiveRecord
         def cast_eav_value value, attribute # :nodoc:
           attributes = self.class_eav_attributes.stringify_keys
           return value unless attributes.keys.include?(attribute)
+          return value if attributes[attribute] == String # no need for casting
 
 
           begin
-            # for core types [eg: String 'foo']
+            # for core types [eg: Integer '12']
             eval("#{attributes[attribute]} '#{value}'")
 
           rescue
