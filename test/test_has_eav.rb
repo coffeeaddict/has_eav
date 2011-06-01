@@ -112,4 +112,33 @@ class TestHasEav < Test::Unit::TestCase
 
     assert_equal t.to_i, p.last_update.to_i, "Time comparisson"
   end
+
+  should "not create attributes with nil value" do
+    p = Post.last
+    p.author_name = nil
+
+    assert_equal [], p.eav_attributes, "No attributes where defined"
+
+    p.author_name = "name"
+
+    assert_equal 1, p.eav_attributes.count, "There is 1 eav attribute"
+
+    p.author_name = nil
+    assert_equal nil, p.author_name, "The value is nilified"
+    assert_equal [], p.eav_attributes, "There are no more attributes"
+  end
+
+  should "include EAV attributes in to_json, as_json and to_xml" do
+    p = Post.last
+    p.author_name = "The Author"
+    p.author_email = nil
+
+    hash = p.as_json
+
+    assert hash["post"].has_key?("author_name"), "The key is present"
+    assert_equal "The Author", hash["post"]["author_name"], "Value is correct"
+
+    assert hash["post"].has_key?("author_email"), "The nil key is present"
+    assert_equal nil, hash["post"]["author_email"], "Value is nil"
+  end
 end
