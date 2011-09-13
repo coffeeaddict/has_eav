@@ -76,10 +76,10 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activerecord (~> 3.0.3)
+  activerecord (~> 3.0)
   bundler (~> 1.0.0)
   jeweler (~> 1.5.1)
-  rails (~> 3.0.3)
+  rails (~> 3.0)
   rcov
   shoulda
   sqlite3-ruby
