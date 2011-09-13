@@ -114,7 +114,7 @@ class TestHasEav < Test::Unit::TestCase
   end
 
   should "not create attributes with nil value" do
-    p = Post.last
+    p = Post.create
     p.author_name = nil
 
     assert_equal [], p.eav_attributes, "No attributes where defined"
