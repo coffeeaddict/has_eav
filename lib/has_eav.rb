@@ -21,7 +21,7 @@ module ActiveRecord
         # end
         #
         # # specify some eav_attributes at class level
-        # has_eav :through => :x_attributes do
+        # has_eav :through => "BoundAttribute" do
         #   eav_attribute :remote_ip
         #   eav_attribute :uniq_id
         # end
@@ -32,16 +32,20 @@ module ActiveRecord
         #
         def has_eav opts={}, &block
           klass = opts.delete :through
+          klass = klass.to_s if klass.is_a? Symbol
+          klass = klass.camelize
+          
           raise(
-          "Eav Class cannot be nil. Specify a class using " +
-          "has_eav :through => :class"
+            "Eav Class cannot be nil. Specify a class using " +
+            "has_eav :through => :class"
           ) if klass.blank?
 
           class_eval do
+            has_many   :eav_attributes, :class_name => klass
             after_save :save_eav_attributes
           end
 
-          @eav_class      = klass.to_s.camelize.constantize
+          @eav_class      = klass.constantize
           @eav_attributes = {}
 
           yield if block_given?
@@ -154,17 +158,6 @@ module ActiveRecord
           end
         end
 
-        # get all the eav attribute instances available for this model instance
-        #
-        # eg: if you model says 'has_eav :through => :post_attribute' these are
-        # all PostAttribute's
-        #
-        def eav_attributes
-          @eav_attributes ||= eav_class.all(
-            :conditions => { self_key => self.id }
-          )
-        end
-
         # save the list of eav_attribute back to the database
         def save_eav_attributes # :nodoc:
           eav_attributes.select { |a| a.changed? }.each do |a|
@@ -236,6 +229,7 @@ module ActiveRecord
                 # for date/time classes [eg: Date.parse("2011-03-20")]
                 eval("#{attributes[attribute]}.parse('#{value}')")
               rescue
+                # nothing worked, falling back to whatever the ORM supplied
                 value
               end
 
