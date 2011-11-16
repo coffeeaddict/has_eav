@@ -221,13 +221,13 @@ module ActiveRecord
 
           rescue
             begin
-              if [Time, Date].include?(attributes[attribute])
-                attributes[attribute].parse(value.to_s)
-              else
-                attributes[attribute].new(value)
-              end
+              attributes[attribute].new(value)
             rescue
-              value
+              begin
+                attributes[attribute].parse(value)
+              rescue
+                value
+              end
             end
           end
         end
