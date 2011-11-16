@@ -221,18 +221,13 @@ module ActiveRecord
 
           rescue
             begin
-              # for BigDecimal [eg: BigDecimal.new("123.45")]
-              eval("#{attributes[attribute]}.new('#{value}')")
-
-            rescue
-              begin
-                # for date/time classes [eg: Date.parse("2011-03-20")]
-                eval("#{attributes[attribute]}.parse('#{value}')")
-              rescue
-                # nothing worked, falling back to whatever the ORM supplied
-                value
+              if [Time, Date].include?(attributes[attribute])
+                attributes[attribute].parse(value.to_s)
+              else
+                attributes[attribute].new(value)
               end
-
+            rescue
+              value
             end
           end
         end
