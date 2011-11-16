@@ -34,7 +34,7 @@ module ActiveRecord
           klass = opts.delete :through
           klass = klass.to_s if klass.is_a? Symbol
           klass = klass.camelize
-          
+
           raise(
             "Eav Class cannot be nil. Specify a class using " +
             "has_eav :through => :class"
@@ -116,13 +116,13 @@ module ActiveRecord
                 return attribute.send(:write_attribute, "value", value)
 
               else
-                @eav_attributes -= [ attribute ]
+                self.eav_attributes -= [ attribute ]
                 return attribute.destroy
 
               end
 
             elsif !value.nil?
-              @eav_attributes << eav_class.new(
+              self.eav_attributes << eav_class.new(
                 :name  => attribute_name,
                 :value => "#{value}"
               )
