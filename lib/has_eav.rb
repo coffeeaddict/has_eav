@@ -9,28 +9,41 @@ module ActiveRecord
         # Specify that the ActiveModel is an EAV model
         #
         # == Usage
-        # # specifiy eav_attributes at instance level
-        # has_eav :through => :some_class_with_name_and_value_attributes
-        # def available_eav_attributes
-        #   case self.origin
-        #   when "remote"
-        #     %(remote_ip user_agent)
-        #   when "local"
-        #     %(user)
-        #   end + [ :uniq_id ]
-        # end
+        #   # specifiy eav_attributes at instance level
+        #   has_eav :through => :some_class_with_name_and_value_attributes
+        #   def available_eav_attributes
+        #     case self.origin
+        #     when "remote"
+        #       %(remote_ip user_agent)
+        #     when "local"
+        #       %(user)
+        #     end + [ :uniq_id ]
+        #   end
         #
-        # # specify some eav_attributes at class level
-        # has_eav :through => "BoundAttribute" do
-        #   eav_attribute :remote_ip
-        #   eav_attribute :uniq_id
-        # end
+        #   # specify some eav_attributes at class level
+        #   has_eav :through => "BoundAttribute" do
+        #     eav_attribute :remote_ip
+        #     eav_attribute :uniq_id
+        #   end
+        #
+        #   # specify more attributes in an STI class
+        #   class ItalianJob < Job
+        #     has_eav do
+        #       eav_attribute :mini_driver
+        #     end
+        #   end
         #
         # == Mixing class and instance defined EAV attributes
         # You can define EAV attributes both in class and instance context and
         # they will be both adhered
         #
         def has_eav opts={}, &block
+          if self.superclass != ActiveRecord::Base && (opts.nil? || opts.empty?)
+            @eav_attributes = {}
+            yield
+            return
+          end
+
           klass = opts.delete :through
           klass = klass.to_s if klass.is_a? Symbol
           klass = klass.camelize
@@ -40,8 +53,10 @@ module ActiveRecord
             "has_eav :through => :class"
           ) if klass.blank?
 
+          opts[:class_name] = klass
+
           class_eval do
-            has_many   :eav_attributes, :class_name => klass
+            has_many   :eav_attributes, opts
             after_save :save_eav_attributes
           end
 
@@ -57,14 +72,14 @@ module ActiveRecord
         def eav_attribute name, type = String
           name = name.to_s if !name.is_a? String
 
-          self.class_eav_attributes[name] = type
+          @eav_attributes[name] = type
         end
 
         # class accessor - when the superclass != AR::Base asume we are in STI
         # mode
         def class_eav_attributes # :nodoc:
           superclass != ActiveRecord::Base ?
-            superclass.class_eav_attributes :
+            superclass.class_eav_attributes.merge(@eav_attributes || {}) :
             @eav_attributes
         end
 
@@ -214,17 +229,16 @@ module ActiveRecord
           return value unless attributes.keys.include?(attribute)
           return value if attributes[attribute] == String # no need for casting
 
-
           begin
             # for core types [eg: Integer '12']
             eval("#{attributes[attribute]} '#{value}'")
 
           rescue
             begin
-              attributes[attribute].new(value)
+              attributes[attribute].parse(value)
             rescue
               begin
-                attributes[attribute].parse(value)
+                attributes[attribute].new(value)
               rescue
                 value
               end

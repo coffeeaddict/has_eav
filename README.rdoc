@@ -66,6 +66,18 @@ your model as if the defined attributes where present in the database.
 In contradiction to acts_as_eav_model, has_eav will not allow for an all open
 structure. You must define the attributes to be required.
 
+=== STI
+
++has_eav+ works in an STI setting, and you can specify *more* attributes in the
+inheriting class. Since the root class is responsible for the relationship to
+the attributes class, you should not specify any options in the STI class
+
+  class PostponedPost < Post
+    has_eav do
+      eav_attribute :release_date
+    end
+  end
+
 ==== Instance eav_attributes
 
 If you create a method +instance_eav_attributes+ in your model, has_eav will
