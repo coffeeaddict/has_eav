@@ -79,7 +79,7 @@ module ActiveRecord
         # mode
         def class_eav_attributes # :nodoc:
           superclass != ActiveRecord::Base ?
-            superclass.class_eav_attributes.merge(@eav_attributes) :
+            superclass.class_eav_attributes.merge(@eav_attributes || {}) :
             @eav_attributes
         end
 
