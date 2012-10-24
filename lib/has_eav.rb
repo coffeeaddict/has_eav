@@ -229,17 +229,16 @@ module ActiveRecord
           return value unless attributes.keys.include?(attribute)
           return value if attributes[attribute] == String # no need for casting
 
-
           begin
             # for core types [eg: Integer '12']
             eval("#{attributes[attribute]} '#{value}'")
 
           rescue
             begin
-              attributes[attribute].new(value)
+              attributes[attribute].parse(value)
             rescue
               begin
-                attributes[attribute].parse(value)
+                attributes[attribute].new(value)
               rescue
                 value
               end
