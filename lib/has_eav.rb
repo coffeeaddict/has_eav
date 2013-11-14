@@ -76,24 +76,24 @@ module ActiveRecord
           @eav_attributes[name] = String
 
           define_method "#{name}=" do |value|
-            if attribute = self.eav_attributes.find_by(name: name)
+            if attribute = self.eav_attributes.select { |attribute| attribute.name == name }.first
               if !value.nil?
-                attribute.update_attributes value: value
+                attribute.attributes = {value: value}
               else
-                self.eav_attibutes.destroy attribute
+                self.eav_attributes.destroy attribute
               end
             elsif !value.nil?
-              self.eav_attributes.send(new_record? ? :build : :create, name: name, value: value)
+              self.eav_attributes.build name: name, value: value
             end
             value
           end
 
           define_method "#{name}?" do
-            self.eav_attributes.where(name: name).any?
+            self.eav_attributes.any? { |attribute| attribute.name == name }
           end
 
           define_method name do
-            self.eav_attributes.find_by(name: name).value if send(:"#{name}?")
+            self.eav_attributes.select { |attribute| attribute.name == name }.first.value if send(:"#{name}?")
           end
         end
 

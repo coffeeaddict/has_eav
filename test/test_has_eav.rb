@@ -72,7 +72,7 @@ class TestHasEav < Test::Unit::TestCase
     )
 
     p = Product.last
-    assert p.cost_price.is_a?(BigDecimal), "casted"
+    assert p.cost_price.is_a?(Numeric), "casted"
     assert p.cost_price == BigDecimal.new(test_val), "same"
   end
 
@@ -121,7 +121,7 @@ class TestHasEav < Test::Unit::TestCase
 
     p.author_name = "name"
 
-    assert_equal 1, p.eav_attributes.count, "There is 1 eav attribute"
+    assert_equal 1, p.eav_attributes.to_a.count, "There is 1 eav attribute"
 
     p.author_name = nil
     assert_equal nil, p.author_name, "The value is nilified"
@@ -135,10 +135,10 @@ class TestHasEav < Test::Unit::TestCase
 
     hash = p.as_json
 
-    assert hash["post"].has_key?("author_name"), "The key is present"
-    assert_equal "The Author", hash["post"]["author_name"], "Value is correct"
+    assert hash.has_key?("author_name"), "The key is present"
+    assert_equal "The Author", hash["author_name"], "Value is correct"
 
-    assert hash["post"].has_key?("author_email"), "The nil key is present"
-    assert_equal nil, hash["post"]["author_email"], "Value is nil"
+    assert hash.has_key?("author_email"), "The nil key is present"
+    assert_equal nil, hash["author_email"], "Value is nil"
   end
 end
