@@ -66,7 +66,7 @@ class TestHasEav < Test::Unit::TestCase
   end
 
   should "cast values with new" do
-    test_val ="13.24458724857"
+    test_val = BigDecimal.new "13.24458724857"
     p = Product.create(
       :name => "test", :description => "test", :cost_price => test_val
     )

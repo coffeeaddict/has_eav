@@ -2,7 +2,7 @@
 #
 class Product < ActiveRecord::Base
   has_eav :through => :product_attribute do
-    eav_attribute :price, Float
-    eav_attribute :cost_price, BigDecimal
+    eav_attribute :price
+    eav_attribute :cost_price
   end
 end

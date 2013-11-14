@@ -74,6 +74,27 @@ module ActiveRecord
           name = name.to_s if !name.is_a? String
 
           @eav_attributes[name] = type
+
+          define_method "#{name}=" do |value|
+            if attribute = self.eav_attributes.find_by(name: name)
+              if !value.nil?
+                attribute.value = value
+              else
+                self.eav_attibutes.destroy attribute
+              end
+            elsif !value.nil?
+              self.eav_attributes.send(new_record? ? :build : :create, name: name, value: value)
+            end
+            value
+          end
+
+          define_method "#{name}?" do
+            self.eav_attributes.where(name: name).any?
+          end
+
+          define_method name do
+            self.eav_attributes.find_by(name: name).value if send(:"#{name}?")
+          end
         end
 
         # class accessor - when the superclass != AR::Base asume we are in STI
@@ -107,54 +128,6 @@ module ActiveRecord
         # Cowardly refusing to adhere to all
         def instance_eav_attributes
           []
-        end
-
-        # override method missing, but only kick in when super fails with a
-        # NoMethodError
-        #
-        def method_missing method_symbol, *args, &block
-          super unless respond_to? method_symbol
-
-          method_name    = method_symbol.to_s
-          attribute_name = method_name.gsub(/[\?=]$/, '')
-
-          if method_name =~ /\=$/
-            self.class.class_eval do
-              define_method method_name do |value|
-                if attribute = self.eav_attributes.find_by(name: attribute_name)
-                  if !value.nil?
-                    attribute.value = value
-                  else
-                    self.eav_attibutes.destroy attribute
-                  end
-                elsif !value.nil?
-                  self.eav_attributes.send(new_record? ? :build : :create, name: attribute_name, value: value)
-                end
-                value
-              end
-            end
-          elsif method_name =~ /\?$/
-            self.class.class_eval do
-              define_method method_name do
-                self.eav_attributes.where(name: attribute_name).any?
-              end
-            end
-          else
-            self.class.class_eval do
-              define_method method_name do
-                self.eav_attributes.find_by(name: attribute_name).value if send(:"#{method_name}?")
-              end
-            end
-          end
-          self.send method_name, *args, &block
-        end
-
-        # override respond_to?
-        def respond_to? method_symbol, is_private=false
-          super || begin
-            method_name = method_symbol.to_s.gsub(/[\?=]$/, '')
-            eav_attributes_list.include? method_name
-          end
         end
 
         # save the list of eav_attribute back to the database
