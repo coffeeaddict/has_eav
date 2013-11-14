@@ -54,6 +54,7 @@ module ActiveRecord
           ) if klass.blank?
 
           opts[:class_name] = klass
+          opts[:dependent] ||= :destroy
 
           class_eval do
             has_many   :eav_attributes, opts
@@ -112,74 +113,53 @@ module ActiveRecord
         # NoMethodError
         #
         def method_missing method_symbol, *args, &block
-          super
-        rescue NoMethodError => e
+          super unless respond_to? method_symbol
+
           method_name    = method_symbol.to_s
           attribute_name = method_name.gsub(/[\?=]$/, '')
 
-          raise e unless eav_attributes_list.include? attribute_name
-
-          attribute = self.eav_attributes.select { |a|
-            a.name == attribute_name
-          }.first
-
           if method_name =~ /\=$/
-            value = args[0]
-
-            if attribute
-              if !value.nil?
-                return attribute.send(:write_attribute, "value", value)
-
-              else
-                self.eav_attributes -= [ attribute ]
-                return attribute.destroy
-
+            self.class.class_eval do
+              define_method method_name do |value|
+                if attribute = self.eav_attributes.find_by(name: attribute_name)
+                  if !value.nil?
+                    attribute.value = value
+                  else
+                    self.eav_attibutes.destroy attribute
+                  end
+                elsif !value.nil?
+                  self.eav_attributes.build name: attribute_name, value: value
+                end
+                value
               end
-
-            elsif !value.nil?
-              self.eav_attributes << eav_class.new(
-                :name  => attribute_name,
-                :value => "#{value}"
-              )
-
-              return cast_eav_value(value, attribute_name)
-
-            else
-              return nil
-
             end
           elsif method_name =~ /\?$/
-            return ( attribute and attribute.value == true ) ? true : false
-
+            self.class.class_eval do
+              define_method method_name do
+                self.eav_attributes.where(name: attribute_name).any?
+              end
+            end
           else
-            return nil if attribute and attribute.destroyed?
-            return attribute ?
-              cast_eav_value(attribute.value, attribute_name) :
-              nil
+            self.class.class_eval do
+              define_method method_name do
+                self.eav_attributes.find_by(name: attribute_name).value if send(:"#{method_name}?")
+              end
+            end
           end
-
-          raise e
+          self.send method_name, *args, &block
         end
 
         # override respond_to?
         def respond_to? method_symbol, is_private=false
-          if super == false
+          super || begin
             method_name = method_symbol.to_s.gsub(/[\?=]$/, '')
-            return true if eav_attributes_list.include? method_name
-
-            false
-          else
-            true
+            eav_attributes_list.include? method_name
           end
         end
 
         # save the list of eav_attribute back to the database
         def save_eav_attributes # :nodoc:
           eav_attributes.select { |a| a.changed? }.each do |a|
-            if a.new_record?
-              a.send( :write_attribute, self_key, self.id )
-            end
-
             a.save!
           end
         end
@@ -188,11 +168,7 @@ module ActiveRecord
         # object has changed.
         #
         def changed?
-          eav_attributes.each do |attribute|
-            return true if ( attribute.changed? || attribute.new_record? )
-          end
-
-          super
+          super || eav_attributes.any? { |attribute| attribute.changed? || attribute.new_record? }
         end
 
         # get a complete list of eav_attributes (class + instance)
@@ -200,16 +176,6 @@ module ActiveRecord
           (
             self.instance_eav_attributes + self.class_eav_attributes.keys
           ).collect { |attribute| attribute.to_s }.uniq
-        end
-
-        # get the key to my <3
-        def self_key # :nodoc:
-          klass = self.class
-          if klass.superclass != ActiveRecord::Base
-            klass = klass.superclass
-          end
-
-          "#{klass.name.underscore}_id".to_sym
         end
 
         # make sure EAV is included in as_json, to_json and to_xml
@@ -223,31 +189,7 @@ module ActiveRecord
           hash
         end
 
-        # cast an eav value to it's desired class
-        def cast_eav_value value, attribute # :nodoc:
-          attributes = self.class_eav_attributes.stringify_keys
-          return value unless attributes.keys.include?(attribute)
-          return value if attributes[attribute] == String # no need for casting
-
-          begin
-            # for core types [eg: Integer '12']
-            eval("#{attributes[attribute]} '#{value}'")
-
-          rescue
-            begin
-              attributes[attribute].parse(value)
-            rescue
-              begin
-                attributes[attribute].new(value)
-              rescue
-                value
-              end
-            end
-          end
-        end
-
-        protected :save_eav_attributes, :self_key, :cast_eav_value
-
+        protected :save_eav_attributes
       end # /InstanceMethods
     end # /HasEav
   end # /ActsAs
