@@ -128,7 +128,7 @@ module ActiveRecord
                     self.eav_attibutes.destroy attribute
                   end
                 elsif !value.nil?
-                  self.eav_attributes.build name: attribute_name, value: value
+                  self.eav_attributes.send(new_record? ? :build : :create, name: attribute_name, value: value)
                 end
                 value
               end
