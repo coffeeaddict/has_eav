@@ -70,15 +70,15 @@ module ActiveRecord
         end
 
         # Add an other attribute to the class list
-        def eav_attribute name, type = String
+        def eav_attribute name
           name = name.to_s if !name.is_a? String
 
-          @eav_attributes[name] = type
+          @eav_attributes[name] = String
 
           define_method "#{name}=" do |value|
             if attribute = self.eav_attributes.find_by(name: name)
               if !value.nil?
-                attribute.value = value
+                attribute.update_attributes value: value
               else
                 self.eav_attibutes.destroy attribute
               end
