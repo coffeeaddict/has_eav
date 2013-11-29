@@ -88,6 +88,42 @@ module ActiveRecord
         def eav_class # :nodoc:
           superclass != ActiveRecord::Base ? superclass.eav_class : @eav_class
         end
+
+      private
+
+        def generate_methods_for_eav_attribute(name)
+          sym = name.is_a?(Symbol) ? name : name.to_sym
+          class_eval <<-RUBY, __FILE__, __LINE__ + 1
+            def #{sym}?
+              scope = eav_attributes.where(:name => name)
+              scope.any? && !scope.first.destroyed?
+            end
+
+            def #{sym}=(value)
+              scope = eav_attributes.where(:name => name)
+              if attribute = scope.first
+                unless value.nil?
+                  attribute.value = value
+                else
+                  scope.first.destroy
+                  nil
+                end
+              else
+                unless value.nil?
+                  scope.build(:value => value)
+                  cast_eav_value(value, name)
+                end
+              end
+            end
+
+            def #{sym}
+              scope = eav_attributes.where(:name => name)
+              if attribute = scope.first
+                attribute.destroyed? ? nil : cast_eav_value(attribute.value, name)
+              end
+            end
+          RUBY
+        end
       end # /ClassMethods
 
       module InstanceMethods
