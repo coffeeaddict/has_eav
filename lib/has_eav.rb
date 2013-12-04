@@ -88,6 +88,44 @@ module ActiveRecord
         def eav_class # :nodoc:
           superclass != ActiveRecord::Base ? superclass.eav_class : @eav_class
         end
+
+        def generate_methods_for_eav_attribute(attribute_name)
+          sym = attribute_name.is_a?(Symbol) ? attribute_name : attribute_name.to_sym
+
+          class_eval <<-RUBY, __FILE__, __LINE__ + 1
+            def #{sym}?
+              attribute = eav_attributes.select{ |a| a.name == '#{attribute_name}' }
+              !!attribute.first
+            end
+
+            def #{sym}=(value)
+              attribute = eav_attributes.select{ |a| a.name == '#{attribute_name}' }
+              if attribute = attribute.first
+                unless value.nil?
+                  attribute.value = value
+                  cast_eav_value(value, '#{attribute_name}')
+                else
+                  # destroy through association
+                  eav_attributes.destroy(attribute)
+                  nil
+                end
+              else
+                unless value.nil?
+                  # build through the association
+                  eav_attributes.build(:name => '#{attribute_name}', :value => value)
+                  cast_eav_value(value, '#{attribute_name}')
+                end
+              end
+            end
+
+            def #{sym}
+              attribute = eav_attributes.select{ |a| a.name == '#{attribute_name}' }
+              if attribute = attribute.first
+                attribute.destroyed? ? nil : cast_eav_value(attribute.value, '#{attribute_name}')
+              end
+            end
+          RUBY
+        end
       end # /ClassMethods
 
       module InstanceMethods
@@ -112,65 +150,23 @@ module ActiveRecord
         # NoMethodError
         #
         def method_missing method_symbol, *args, &block
-          super
-        rescue NoMethodError => e
           method_name    = method_symbol.to_s
           attribute_name = method_name.gsub(/[\?=]$/, '')
 
-          raise e unless eav_attributes_list.include? attribute_name
+          if eav_attributes_list.include? attribute_name
+            self.class.generate_methods_for_eav_attribute(attribute_name)
 
-          attribute = self.eav_attributes.select { |a|
-            a.name == attribute_name
-          }.first
-
-          if method_name =~ /\=$/
-            value = args[0]
-
-            if attribute
-              if !value.nil?
-                return attribute.send(:write_attribute, "value", value)
-
-              else
-                self.eav_attributes -= [ attribute ]
-                return attribute.destroy
-
-              end
-
-            elsif !value.nil?
-              self.eav_attributes << eav_class.new(
-                :name  => attribute_name,
-                :value => "#{value}"
-              )
-
-              return cast_eav_value(value, attribute_name)
-
-            else
-              return nil
-
-            end
-          elsif method_name =~ /\?$/
-            return ( attribute and attribute.value == true ) ? true : false
-
+            send(method_symbol, *args)
           else
-            return nil if attribute and attribute.destroyed?
-            return attribute ?
-              cast_eav_value(attribute.value, attribute_name) :
-              nil
+            super
           end
-
-          raise e
         end
 
         # override respond_to?
         def respond_to? method_symbol, is_private=false
-          if super == false
-            method_name = method_symbol.to_s.gsub(/[\?=]$/, '')
-            return true if eav_attributes_list.include? method_name
-
-            false
-          else
-            true
-          end
+          method_name    = method_symbol.to_s
+          attribute_name = method_name.gsub(/[\?=]$/, '')
+          eav_attributes_list.include?(attribute_name) || super
         end
 
         # save the list of eav_attribute back to the database

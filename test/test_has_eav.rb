@@ -121,7 +121,7 @@ class TestHasEav < Test::Unit::TestCase
 
     p.author_name = "name"
 
-    assert_equal 1, p.eav_attributes.count, "There is 1 eav attribute"
+    assert_equal 1, p.eav_attributes.size, "There is 1 eav attribute"
 
     p.author_name = nil
     assert_equal nil, p.author_name, "The value is nilified"
